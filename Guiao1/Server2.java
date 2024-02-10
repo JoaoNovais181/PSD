@@ -29,7 +29,10 @@ public class Server2
                     while(s.read(bb) > 0)
                     {
                         bb.flip();
-                        // queue.addMessage(bb.);
+                        byte[] orig = bb.array(),
+                                copy = new byte[orig.length];
+                        System.arraycopy(orig, 0, copy, 0, orig.length);
+                        queue.addMessage(copy);
                         bb.clear();
                     }
                 } 
@@ -39,31 +42,33 @@ public class Server2
                 }
                 finally
                 {
+                    System.out.println("Ending Connection");
                 }
             }).start();
 
             // Writer Thread
             new Thread(() -> {
-                // byte[]
+                byte[] lastMessage = null,
+                        readMessage = null;
 
                 try 
                 {
-                    while()
+                    while((readMessage = queue.getMessage(lastMessage)) != null)
                     {
-                        bb.flip();
-                        byte[] msgOrig = bb.array();
-                        byte[] msg = new byte[msgOrig.length];
-                        System.arraycopy(msgOrig, 0, msg, 0, msgOrig.length);
-                        queue.addMessage(msg);
+                        ByteBuffer bb = ByteBuffer.wrap(readMessage);
+                        s.write(bb);
                         bb.clear();
+                        lastMessage = readMessage;
                     }
                 } 
-                catch (IOException e) 
+                catch (Exception e) 
                 {
-                    e.printStackTrace();
+                    // System.out.println("Ending Connection");
+                        // e.printStackTrace();
                 }
                 finally
                 {
+                    System.out.println("Ending Connection");
                 }
             }).start();
         }

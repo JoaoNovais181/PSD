@@ -1,25 +1,26 @@
-import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.locks.Condition;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.concurrent.locks.ReentrantLock;
 
 public class MessageQueue {
-    private List<ByteBuffer> messages;
-    private ReentrantReadWriteLock lock;
+    private List<byte[]> messages;
+    private ReentrantLock readLock, writeLock;
     private Condition availableMessages;
     // private Map<SocketChannel, 
 
     public MessageQueue()
     {
         this.messages = new ArrayList<>();
-        this.lock = new ReentrantReadWriteLock();
-        this.availableMessages = this.lock.readLock().newCondition();
+        this.readLock = new ReentrantLock();
+        this.writeLock = new ReentrantLock();
+        this.availableMessages = this.readLock.newCondition();
     }
 
-    public void addMessage(ByteBuffer message)
+    public void addMessage(byte[] message)
     {
-        this.lock.writeLock().lock();
+        this.readLock.lock();
+        this.writeLock.lock();
         try
         {
             this.messages.add(message);
@@ -30,17 +31,18 @@ public class MessageQueue {
         }
         finally
         {
-            this.lock.writeLock().unlock();
+            this.writeLock.unlock();
+            this.readLock.unlock();
         }
     }
 
-    public ByteBuffer getMessage(ByteBuffer lastMessage)
+    public byte[] getMessage(byte[] lastMessage)
     {
-        ByteBuffer result = null;
-        this.lock.readLock().lock();
+        byte[] result = null;
+        this.readLock.lock();
         try
         {
-            while (this.messages.indexOf(lastMessage) >= this.messages.size())
+            while (this.messages.size() == 0 || this.messages.indexOf(lastMessage)+1 >= this.messages.size())
                 this.availableMessages.await();
 
             int idx = this.messages.indexOf(lastMessage);
@@ -57,7 +59,7 @@ public class MessageQueue {
         }
         finally
         {
-            this.lock.readLock().unlock();
+            this.readLock.unlock();
         }
         return result;
     }
