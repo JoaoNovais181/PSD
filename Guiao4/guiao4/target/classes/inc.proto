@@ -1,0 +1,12 @@
+syntax = "proto3";
+
+package inc;
+option java_multiple_files = true;
+
+service Inc {
+    rpc incMany(stream Message) returns (stream Message);
+}
+
+message Message {
+    int32 num = 1;
+}
