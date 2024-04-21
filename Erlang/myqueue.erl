@@ -6,7 +6,7 @@ create() -> {[], []}.
 
 % enqueue(Queue, Item) -> lists:append(Queue, [Item]).
 % enqueue(Queue, Item) -> Queue ++ [Item].
-enqueue({I, O}, Item) -> {O:I, O}.
+enqueue({I, O}, Item) -> {Item:I, O}.
 
 % dequeue(Queue) ->
 %   case Queue of
